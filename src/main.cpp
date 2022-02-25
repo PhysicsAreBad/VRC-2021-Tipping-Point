@@ -1,7 +1,11 @@
 #include "main.h"
 
+#include <memory>
+
 #include "robot.h"
 #include "utils.h"
+
+std::unique_ptr<Robot> robot(new Robot());
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -11,6 +15,7 @@
  */
 void initialize() {
 	pros::lcd::initialize();
+	robot->init();
 }
 
 /**
@@ -60,16 +65,18 @@ void autonomous() {}
 void opcontrol() {
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
-	std::unique_ptr<Robot> robot(new Robot());
-
 	while (true) {
-		int armAmount = utils::deadzone(master.get_analog(ANALOG_LEFT_Y), 32);
+		pros::lcd::clear_line(0);
+		pros::lcd::set_text(0, std::to_string(robot->getArmPosition()));
+		int arm = utils::deadzone(master.get_analog(ANALOG_LEFT_Y), 32);
 
 		double multiplier = master.get_digital(DIGITAL_R2) ? 0.25 : 1;
 
-		int x = utils::deadzone(master.get_analog(ANALOG_RIGHT_X), 32) * multiplier; 
-		int y = utils::deadzone(master.get_analog(ANALOG_RIGHT_Y), 32) * multiplier;
-		int rotate = utils::deadzone(master.get_analog(ANALOG_LEFT_X), 32) * multiplier;
+		bool invert = master.get_digital(DIGITAL_L2);
+
+		int x = utils::deadzone(master.get_analog(ANALOG_RIGHT_X), 32) * multiplier * (invert ? -1 : 1); 
+		int y = utils::deadzone(master.get_analog(ANALOG_RIGHT_Y), 32) * multiplier * (invert ? -1 : 1);
+		int rotate = utils::deadzone(master.get_analog(ANALOG_LEFT_X), 32) * multiplier * (invert ? -1 : 1);
 
 		robot->drive(x, y, rotate);
 
@@ -78,7 +85,7 @@ void opcontrol() {
 		} else if (master.get_digital(DIGITAL_R1)) {
 			robot->armDown();
 		} else {
-			robot->moveArm(armAmount*0.25);
+			robot->moveArm(arm * 0.5 * multiplier);
 		}
 
 		pros::delay(5);

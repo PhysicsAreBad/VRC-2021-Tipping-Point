@@ -10,13 +10,15 @@ class Robot {
     Robot();
     ~Robot();
 
+    void init();
+
     //Drivetrain
 
     /**
     * @brief Move the robot based off of percentage in 3-axies
-    * @param x How much to move the robot backwards/forwards (-100 -> 100)
-    * @param y How much to move the robot left/right (-100 -> 100)
-    * @param rotate How much to rotate the robot left/right (-100 -> 100)
+    * @param x How much to move the robot backwards/forwards (-128 -> 127)
+    * @param y How much to move the robot left/right (-128 -> 127)
+    * @param rotate How much to rotate the robot left/right (-128 -> 127)
     */
     void drive(int x, int y, int rotate);
 
@@ -36,7 +38,7 @@ class Robot {
 
     /**
      * @brief Move the arm
-     * @param amount How much to move the arm Up/Down (100 -> -100)
+     * @param amount How much to move the arm Up/Down (127 -> -128)
      */
     void moveArm(int amount);
 
@@ -50,6 +52,12 @@ class Robot {
      */
     void armDown();
 
+    /**
+     * @brief Get the Arm Position
+     * @return the current position of the arm in encoder units (0 should be completely down)
+     */
+    double getArmPosition();
+        
     private:
     //Drivetrain
     pros::Motor* frontLeft;
@@ -59,5 +67,4 @@ class Robot {
 
     //Arm
     pros::Motor* arm;
-    pros::ADIDigitalIn* limitSwitch;
 };
