@@ -34,6 +34,19 @@ class Robot {
      */
     void stopDrive();
 
+    /**
+     * @brief Toggle if the robot drive relative to the ring fork or the goal clamp
+     */
+    void toggleInverseControls();
+
+    /**
+     * @brief Get the direction the robot is driving relative to.
+     * 
+     * @return true - Movement relative to the goal end
+     * @return false - Movement relative to the ring end
+     */
+    bool getInversed();
+
     //Arm
 
     /**
@@ -64,6 +77,7 @@ class Robot {
     pros::Motor* frontRight;
     pros::Motor* backLeft;
     pros::Motor* backRight;
+    bool isInverse;
 
     //Arm
     pros::Motor* arm;

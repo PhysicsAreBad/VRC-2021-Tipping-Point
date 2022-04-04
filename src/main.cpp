@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "robot.h"
-#include "utils.h"
+#include "utils.cpp"
 
 std::unique_ptr<Robot> robot(new Robot());
 
@@ -49,6 +49,12 @@ void competition_initialize() {}
  */
 void autonomous() {}
 
+void renderControllerScreen(pros::Controller controller, bool isInversed, bool isSlowed) {
+		controller.clear_line(0);
+		pros::delay(200);
+		controller.set_text(0, 2, "I: " + BoolToString(isInversed) + " S: " + BoolToString(isSlowed));
+}
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -65,18 +71,34 @@ void autonomous() {}
 void opcontrol() {
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
+	bool isSlowed = false;
+
+	renderControllerScreen(master, robot->getInversed(), isSlowed);
+
 	while (true) {
 		pros::lcd::clear_line(0);
 		pros::lcd::set_text(0, std::to_string(robot->getArmPosition()));
-		int arm = utils::deadzone(master.get_analog(ANALOG_LEFT_Y), 32);
+		int arm = deadzone(master.get_analog(ANALOG_LEFT_Y), 48);
 
-		double multiplier = master.get_digital(DIGITAL_R2) ? 0.25 : 1;
+		if (master.get_digital(DIGITAL_L2)) {
+			robot->toggleInverseControls();
+			renderControllerScreen(master, robot->getInversed(), isSlowed);
+		}
+			
+		if (master.get_digital(DIGITAL_R2)) {
+			isSlowed = !isSlowed;
+			renderControllerScreen(master, robot->getInversed(), isSlowed);
+		}
+			
+		pros::lcd::set_text(1, "Inversed: " + BoolToString(robot->getInversed()) + "  Slowed: " + BoolToString(isSlowed));
+		
+		
+		double multiplier = isSlowed ? 0.25 : 1;
 
-		bool invert = master.get_digital(DIGITAL_L2);
 
-		int x = utils::deadzone(master.get_analog(ANALOG_RIGHT_X), 32) * multiplier * (invert ? -1 : 1); 
-		int y = utils::deadzone(master.get_analog(ANALOG_RIGHT_Y), 32) * multiplier * (invert ? -1 : 1);
-		int rotate = utils::deadzone(master.get_analog(ANALOG_LEFT_X), 32) * multiplier * (invert ? -1 : 1);
+		int x = deadzone(master.get_analog(ANALOG_RIGHT_X), 48) * multiplier ; 
+		int y = deadzone(master.get_analog(ANALOG_RIGHT_Y), 48) * multiplier;
+		int rotate = deadzone(master.get_analog(ANALOG_LEFT_X), 48) * multiplier * (robot->getInversed() ? -1 : 1);
 
 		robot->drive(x, y, rotate);
 
@@ -85,9 +107,9 @@ void opcontrol() {
 		} else if (master.get_digital(DIGITAL_R1)) {
 			robot->armDown();
 		} else {
-			robot->moveArm(arm * 0.5 * multiplier);
+			robot->moveArm(arm * (isSlowed ? 0.50 : 1));
 		}
 
-		pros::delay(5);
+		pros::delay(10);
 	}
 }

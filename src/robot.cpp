@@ -6,19 +6,24 @@ Robot::Robot() {
 	frontRight = new pros::Motor(FRONT_RIGHT_MOTOR, true);
 	backLeft = new pros::Motor(BACK_LEFT_MOTOR);
 	backRight = new pros::Motor(BACK_RIGHT_MOTOR, true);
+    
+    isInverse = false;
 
     arm = new pros::Motor(ARM);
 }
 
 void Robot::init() {
     arm->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); //Configure the arm motor to hold it's position when stopped
-    arm->move_velocity(100);
-    pros::delay(100);
-    while(arm->get_actual_velocity() > 2)
-        arm->move_velocity(100);
+    //Flip out the arm
+    arm->move_velocity(-100);
+    pros::delay(350);
     arm->move_velocity(0);
-    pros::delay(100);
-    arm->set_zero_position(arm->get_position()); //Reset zero position
+    //Find the zero point
+    /**arm->move_velocity(100);
+    pros::delay(200);
+    while(arm->get_actual_velocity() > 10);
+    arm->move_velocity(0);
+    arm->set_zero_position(arm->get_position());**/ //Set zero position
 }
 
 void Robot::drive(int x, int y, int rotate) {
@@ -27,10 +32,10 @@ void Robot::drive(int x, int y, int rotate) {
   	double denominator = fmax(fabs(y) + fabs(x) + fabs(rotate), 128);
 
   	//Assign power according to mechanum control logic
-  	*frontLeft = (y + x + rotate) / denominator * 128;
- 	*backLeft = (y - x + rotate) / denominator * 128;
- 	*frontRight = (y - x - rotate) / denominator * 128;
-  	*backRight = (y + x - rotate) / denominator * 128;
+  	*frontLeft = (y + x + rotate) / denominator * 128 * (isInverse ? -1 : 1);
+ 	*backLeft = (y - x + rotate) / denominator * 128 * (isInverse ? -1 : 1);
+ 	*frontRight = (y - x - rotate) / denominator * 128 * (isInverse ? -1 : 1);
+  	*backRight = (y + x - rotate) / denominator * 128 * (isInverse ? -1 : 1);
 }
 
 void Robot::driveTank(int left, int right) {
@@ -42,6 +47,14 @@ void Robot::driveTank(int left, int right) {
 
 void Robot::stopDrive() {
     driveTank(0, 0);
+}
+
+bool Robot::getInversed() {
+    return isInverse;
+}
+
+void Robot::toggleInverseControls() {
+    isInverse = !isInverse;
 }
 
 void Robot::moveArm(int amount) {
