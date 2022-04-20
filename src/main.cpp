@@ -76,8 +76,6 @@ void opcontrol() {
 	renderControllerScreen(master, robot->getInversed(), isSlowed);
 
 	while (true) {
-		pros::lcd::clear_line(0);
-		pros::lcd::set_text(0, std::to_string(robot->getArmPosition()));
 		int arm = deadzone(master.get_analog(ANALOG_LEFT_Y), 48);
 
 		if (master.get_digital(DIGITAL_L2)) {

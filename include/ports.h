@@ -7,5 +7,4 @@
 #define BACK_RIGHT_MOTOR 1
 
 //Arm
-#define ARM_MAX_LIMIT_SWITCH 'H'
 #define ARM 12
